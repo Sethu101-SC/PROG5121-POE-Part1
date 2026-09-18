@@ -222,3 +222,30 @@ class Login {
         return salt;
     }
 }
+
+Unit Test
+
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
+ */
+package com.mycompany.prog5121_poe_part1;
+
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ *
+ * @author sethu
+ */
+public class PROG5121_POE_Part1IT {
+    
+    public PROG5121_POE_Part1IT() {
+    }
+
+    @Test
+    public void testMain() {
+    }
+    
+}
+
