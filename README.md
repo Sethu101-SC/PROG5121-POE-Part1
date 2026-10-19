@@ -271,3 +271,116 @@ public class PROG5121_POE_Part2 {
         }
     }
 }
+
+TEST UNITS
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
+ */
+package PROG5121_POEPART2_UnitTests;
+
+
+import com.mycompany.prog5121_poe_part2.PROG5121_POE_Part2;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+/**
+ *
+ * @author sethu
+ */
+public class TestData {
+        
+        @Test
+    public void messageLengthSuccess() {
+        String msg = "Hi Mike, can you join us for dinner tonight?";
+
+        assertEquals("Message ready to send.",
+                PROG5121_POE_Part2.checkMessageLength(msg));
+    }
+
+    @Test
+    public void messageLengthFailure() {
+        String msg = "a".repeat(260);
+
+        assertEquals(
+                "Message exceeds 250 characters by 10; please reduce the size.",
+                PROG5121_POE_Part2.checkMessageLength(msg));
+    }
+
+    @Test
+    public void recipientNumberSuccess() {
+        assertEquals("Cell phone number successfully captured.",
+                PROG5121_POE_Part2.checkRecipientCell("+27718693002"));
+    }
+
+    @Test
+    public void recipientNumberFailure() {
+        assertEquals(
+                "Cell phone number is incorrectly formatted or does not contain an international code. Please correct the number and try again.",
+                PROG5121_POE_Part2.checkRecipientCell("08575975889"));
+    }
+
+    @Test
+    public void messageHashCorrect() {
+        String[] ids = {"0012345678", "1098765432"};
+        int[] nums = {0, 1};
+
+        String[] msgs = {
+            "Hi Mike, can you join us for dinner tonight?",
+            "Hi Keegan, did you receive the payment?"
+        };
+
+        String[] expected = {
+            "00:0:HITONIGHT",
+            "10:1:HIPAYMENT"
+        };
+
+        for (int i = 0; i < msgs.length; i++) {
+            assertEquals(expected[i],
+                    PROG5121_POE_Part2.createMessageHash(
+                            ids[i], nums[i], msgs[i]));
+        }
+    }
+
+    @Test
+    public void messageIdCreated() {
+        String id = PROG5121_POE_Part2.checkMessageID();
+
+        assertEquals(10, id.length());
+        assertTrue(id.matches("\\d{10}"));
+    }
+
+    @Test
+    public void messageSent() {
+        assertEquals("Message successfully sent.",
+                PROG5121_POE_Part2.sentMessage(0));
+    }
+
+    @Test
+    public void messageDisregarded() {
+        assertEquals("Press 0 to delete the message.",
+                PROG5121_POE_Part2.sentMessage(1));
+    }
+
+    @Test
+    public void messageStored() {
+        assertEquals("Message successfully stored.",
+                PROG5121_POE_Part2.sentMessage(2));
+    }
+
+    @Test
+    public void totalMessagesSent() {
+        int before = PROG5121_POE_Part2.returnTotalMessages();
+
+        PROG5121_POE_Part2.sentMessage(0);
+        PROG5121_POE_Part2.sentMessage(1);
+
+        assertEquals(before + 1,
+                PROG5121_POE_Part2.returnTotalMessages());
+    }
+}
+    
+    
+
+
+
