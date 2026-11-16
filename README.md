@@ -560,5 +560,258 @@ public class PROG5121w_FinalPOE {
         JOptionPane.showMessageDialog(null, scroll, "Stored Messages", JOptionPane.INFORMATION_MESSAGE);
     }
 }
+
+TEST UNITS
+package com.mycompany.prog5121w_finalpoe;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class PROG5121w_FinalPOETest {
+
+    // Test data from the requirements (messages 1-4)
+    private static final String MSG1 = "Did you get the cake?";
+    private static final String MSG2 = "Where are you? You are late! I have asked you to be on time.";
+    private static final String MSG3 = "Ok, I am leaving without you.";
+    private static final String MSG4 = "It is dinner time!";
+
+    private static final Path JSON_PATH = Paths.get("Jsonnew.json");
+    private byte[] jsonBackup; // holds the real Jsonnew.json so tests never destroy it
+
+    // Resets all static state so tests do not depend on run order
+    @BeforeEach
+    public void setUp() throws IOException {
+        PROG5121w_FinalPOE.sentMessages.clear();
+        PROG5121w_FinalPOE.disregardedMessages.clear();
+        PROG5121w_FinalPOE.storedMessagesFile.clear();
+        PROG5121w_FinalPOE.messageHashes.clear();
+        PROG5121w_FinalPOE.messageIDs.clear();
+        PROG5121w_FinalPOE.storedMessageIDs.clear();
+        PROG5121w_FinalPOE.storedMessageHashes.clear();
+        PROG5121w_FinalPOE.storedRecipients.clear();
+        PROG5121w_FinalPOE.totalMessagesSent = 0;
+        PROG5121w_FinalPOE.messageNumber = 0;
+        PROG5121w_FinalPOE.registeredUsername = "test_";
+
+        // Back up the real JSON file, then start each test with no file
+        jsonBackup = Files.exists(JSON_PATH) ? Files.readAllBytes(JSON_PATH) : null;
+        Files.deleteIfExists(JSON_PATH);
+    }
+
+    // Restores the real JSON file (or removes the one the test created)
+    @AfterEach
+    public void tearDown() throws IOException {
+        if (jsonBackup != null) {
+            Files.write(JSON_PATH, jsonBackup);
+        } else {
+            Files.deleteIfExists(JSON_PATH);
+        }
+    }
+
+    // Sent Messages array correctly populated
+    @Test
+    public void testSentMessagesArrayPopulated() {
+        PROG5121w_FinalPOE.sentMessages.add(MSG1);
+        PROG5121w_FinalPOE.sentMessages.add(MSG4);
+
+        ArrayList<String> expected = new ArrayList<>(Arrays.asList(MSG1, MSG4));
+        assertEquals(expected, PROG5121w_FinalPOE.sentMessages);
+    }
+
+    // Display the longest message
+    @Test
+    public void testLongestStoredMessage() {
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG1);
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG2);
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG3);
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG4);
+
+        assertEquals("Longest stored message:\n" + MSG2,
+                PROG5121w_FinalPOE.longestStoredMessage());
+    }
+
+    // Search for message ID (message 4)
+    @Test
+    public void testSearchByMessageID() {
+        PROG5121w_FinalPOE.storedMessageIDs.add("0000000004");
+        PROG5121w_FinalPOE.storedRecipients.add("0838884567");
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG4);
+
+        assertEquals("Recipient: 0838884567\nMessage: " + MSG4,
+                PROG5121w_FinalPOE.searchByMessageID("0000000004"));
+    }
+
+    // Search all messages for one recipient
+    @Test
+    public void testSearchByRecipient() {
+        String recipient = "+27838884567";
+        PROG5121w_FinalPOE.storedRecipients.add(recipient);
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG2);
+        PROG5121w_FinalPOE.storedRecipients.add(recipient);
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG3);
+
+        assertEquals("Messages for " + recipient + ":\n\n" + MSG2 + "\n\n" + MSG3 + "\n\n",
+                PROG5121w_FinalPOE.searchByRecipient(recipient));
+    }
+
+    // Delete a message using its hash (test message 2)
+    @Test
+    public void testDeleteByHash() {
+        String hash = PROG5121w_FinalPOE.createMessageHash("0012345678", 2, MSG2); // 00:2:WHERETIME
+        PROG5121w_FinalPOE.storedMessageIDs.add("0012345678");
+        PROG5121w_FinalPOE.storedMessageHashes.add(hash);
+        PROG5121w_FinalPOE.storedRecipients.add("+27838884567");
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG2);
+
+        assertEquals("Message \"" + MSG2 + "\" successfully deleted.",
+                PROG5121w_FinalPOE.deleteByHash(hash));
+        // All four arrays must stay lined up after the delete
+        assertEquals(0, PROG5121w_FinalPOE.storedMessageHashes.size());
+        assertEquals(0, PROG5121w_FinalPOE.storedMessagesFile.size());
+    }
+
+    // Display report
+    @Test
+    public void testStoredMessagesReport() {
+        PROG5121w_FinalPOE.storedMessageIDs.add("1234567890");
+        PROG5121w_FinalPOE.storedMessageHashes.add("12:1:DIDCAKE");
+        PROG5121w_FinalPOE.storedRecipients.add("+27834557896");
+        PROG5121w_FinalPOE.storedMessagesFile.add(MSG1);
+
+        String expected = "STORED MESSAGES REPORT\n\n"
+                + "Message 1\n"
+                + "Message ID: 1234567890\n"
+                + "Message Hash: 12:1:DIDCAKE\n"
+                + "Sender: test_\n"
+                + "Recipient: +27834557896\n"
+                + "Message: " + MSG1 + "\n\n";
+        assertEquals(expected, PROG5121w_FinalPOE.storedMessagesReport());
+    }
+
+    //Tests to validate the message
+    @Test
+    public void testCreateMessageHash() {
+        assertEquals("12:1:DIDCAKE",
+                PROG5121w_FinalPOE.createMessageHash("1234567890", 1, MSG1));
+    }
+
+    @Test
+    public void testCheckMessageID() {
+        String id = PROG5121w_FinalPOE.checkMessageID();
+        assertTrue(id.matches("\\d{10}")); // always exactly 10 digits
+    }
+
+    @Test
+    public void testCheckRecipientCell() {
+        assertEquals("Cell phone number successfully captured.",
+                PROG5121w_FinalPOE.checkRecipientCell("+27834557896"));
+        assertTrue(PROG5121w_FinalPOE.checkRecipientCell("0838884567")
+                .contains("incorrectly formatted"));
+    }
+
+    @Test
+    public void testCheckMessageLength() {
+        assertEquals("Message ready to send.", PROG5121w_FinalPOE.checkMessageLength(MSG1));
+        // Boundary is exactly 250 which is allowed, 251 is not
+        assertEquals("Message ready to send.",
+                PROG5121w_FinalPOE.checkMessageLength("a".repeat(250)));
+        assertEquals("Message exceeds 250 characters by 1; please reduce the size.",
+                PROG5121w_FinalPOE.checkMessageLength("a".repeat(251)));
+    }
+
+    @Test
+    public void testSentMessage() {
+        assertEquals("Message successfully sent.", PROG5121w_FinalPOE.sentMessage(0));
+        assertEquals("Press 0 to delete the message.", PROG5121w_FinalPOE.sentMessage(1));
+        assertEquals("Message successfully stored.", PROG5121w_FinalPOE.sentMessage(2));
+        assertEquals("Message disregarded.", PROG5121w_FinalPOE.sentMessage(9));
+    }
+
+    @Test
+    public void testReturnTotalMessages() {
+        assertEquals(0, PROG5121w_FinalPOE.returnTotalMessages());
+        PROG5121w_FinalPOE.sentMessage(0); // only "send" increases the total
+        PROG5121w_FinalPOE.sentMessage(0);
+        PROG5121w_FinalPOE.sentMessage(2);
+        assertEquals(2, PROG5121w_FinalPOE.returnTotalMessages());
+    }
+
+    @Test
+    public void testPrintMessages() {
+        assertEquals("No messages have been sent yet.", PROG5121w_FinalPOE.printMessages());
+        PROG5121w_FinalPOE.sentMessages.add(MSG1);
+        PROG5121w_FinalPOE.sentMessages.add(MSG4);
+        assertEquals(MSG1 + "\n\n" + MSG4 + "\n\n", PROG5121w_FinalPOE.printMessages());
+    }
+
+    //JSON tests
+
+    @Test
+    public void testEscapeJson() {
+        assertEquals("say \\\"hi\\\"\\nbye", PROG5121w_FinalPOE.escapeJson("say \"hi\"\nbye"));
+    }
+
+    @Test
+    public void testUnescapeJson() {
+        assertEquals("say \"hi\"\nbye", PROG5121w_FinalPOE.unescapeJson("say \\\"hi\\\"\\nbye"));
+    }
+
+    @Test
+    public void testReadJsonField() {
+        String json = "[{\"Recipient\": \"+27834557896\"}, {\"Recipient\": \"+27838884567\"}]";
+        ArrayList<String> expected = new ArrayList<>(Arrays.asList("+27834557896", "+27838884567"));
+        assertEquals(expected, PROG5121w_FinalPOE.readJsonField(json, "Recipient"));
+    }
+
+    // Stores a message, clears the memory and then loads it back from the file
+    @Test
+    public void testStoreAndLoadStoredMessages() {
+        PROG5121w_FinalPOE.storeMessage("1234567890", "12:1:DIDCAKE", "+27834557896", MSG1);
+
+        PROG5121w_FinalPOE.storedMessageIDs.clear();
+        PROG5121w_FinalPOE.storedMessageHashes.clear();
+        PROG5121w_FinalPOE.storedRecipients.clear();
+        PROG5121w_FinalPOE.storedMessagesFile.clear();
+        PROG5121w_FinalPOE.loadStoredMessages();
+
+        assertEquals(Arrays.asList("1234567890"), PROG5121w_FinalPOE.storedMessageIDs);
+        assertEquals(Arrays.asList("12:1:DIDCAKE"), PROG5121w_FinalPOE.storedMessageHashes);
+        assertEquals(Arrays.asList("+27834557896"), PROG5121w_FinalPOE.storedRecipients);
+        assertEquals(Arrays.asList(MSG1), PROG5121w_FinalPOE.storedMessagesFile);
+    }
+
+    @Test
+    public void testLoadStoredMessagesNoFile() {
+        PROG5121w_FinalPOE.loadStoredMessages(); // setUp already removed the file
+        assertTrue(PROG5121w_FinalPOE.storedMessagesFile.isEmpty());
+    }
+
+    //Stored messages menu helpers
+    @Test
+    public void testDisplaySendersAndRecipients() {
+        assertEquals("No stored messages.", PROG5121w_FinalPOE.displaySendersAndRecipients());
+        PROG5121w_FinalPOE.storedMessageIDs.add("1234567890");
+        PROG5121w_FinalPOE.storedRecipients.add("+27834557896");
+        assertEquals("Sender: test_\nRecipient: +27834557896\n\n",
+                PROG5121w_FinalPOE.displaySendersAndRecipients());
+    }
+
+    @Test
+    public void testNotFoundAndEmptyResults() {
+        assertEquals("No stored messages.", PROG5121w_FinalPOE.longestStoredMessage());
+        assertEquals("Message ID not found.", PROG5121w_FinalPOE.searchByMessageID("999"));
+        assertEquals("No stored messages found for +27830000000.",
+                PROG5121w_FinalPOE.searchByRecipient("+27830000000"));
+        assertEquals("Message hash not found.", PROG5121w_FinalPOE.deleteByHash("XX:0:NONE"));
+    }
+}
   
 
